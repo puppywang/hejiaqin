@@ -27,6 +27,8 @@ from .const import (
     CONF_API_KEY,
     CONF_PHONE,
     CONF_PASSWORD,
+    CONFIG,
+    SL_DEVICES,
     DOMAIN,
 )
 #from .discovery import discover
@@ -201,17 +203,27 @@ class HejiaqinOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage basic options."""
-        old_scan_interval = self.hass.data[DOMAIN][CONF_SCAN_INTERVAL]
+        old_scan_interval = self._config_entry.options.get(CONF_SCAN_INTERVAL)
+        if old_scan_interval is None:
+            old_scan_interval = self.hass.data.get(DOMAIN, {}).get(CONF_SCAN_INTERVAL)
+        if old_scan_interval is None:
+            old_scan_interval = DEFAULT_SCAN_INTERVAL
         defaults = {CONF_SCAN_INTERVAL: old_scan_interval}
 
         if user_input is not None:
             scan_interval = user_input.get(CONF_SCAN_INTERVAL, old_scan_interval)
-            self.hass.data[DOMAIN][CONF_SCAN_INTERVAL] = scan_interval
+            self.hass.data.setdefault(DOMAIN, {})[CONF_SCAN_INTERVAL] = scan_interval
             
-            for device in self.hass.data[DOMAIN][SL_DEVICES][self._config_entry.entry_id]:
+            devices = (
+                self.hass.data.get(DOMAIN, {})
+                .get(CONFIG, {})
+                .get(self._config_entry.entry_id, {})
+                .get(SL_DEVICES, [])
+            )
+            for device in devices:
                 await device.async_set_scan_interval(scan_interval)
             
-            return self.async_create_entry(title="", data={})
+            return self.async_create_entry(title="", data={CONF_SCAN_INTERVAL: scan_interval})
 
         return self.async_show_form(
             step_id="init",

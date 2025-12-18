@@ -58,6 +58,7 @@ from .const import (
     CLOUD_DATA,
     DOMAIN,
     PLUG_DOMAIN,
+    DEFAULT_SCAN_INTERVAL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -117,7 +118,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         SL_DEVICES: list(),
     }
     hass.data[DOMAIN][CONFIG][entry.entry_id] = config
-    hass.data[DOMAIN][CONF_SCAN_INTERVAL] = entry.data[CONF_USER_INPUT][CONF_SCAN_INTERVAL]
+    scan_interval = entry.options.get(
+        CONF_SCAN_INTERVAL,
+        entry.data.get(CONF_USER_INPUT, {}).get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+    )
+    hass.data[DOMAIN][CONF_SCAN_INTERVAL] = scan_interval
     # hass.data[DOMAIN][CONF_DNS_UPDATE] = dns_update
     # dns_update.dns.set_domain(PLUG_DOMAIN)
     # dns_update.devices = config[SL_DEVICES]
@@ -127,6 +132,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             device_config = {**entry.data[CONF_DEVICES][dev_id], CONF_ENTRY_ID: entry.entry_id}
             device = await get_hejiaqin_device(hass, device_config)
             if device is None: continue
+            await device.async_set_scan_interval(scan_interval)
             config[SL_DEVICES].append(device)
             # await device.async_setup()
 
