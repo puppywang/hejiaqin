@@ -429,8 +429,13 @@ class Plug(HejiaqinDevice, ABC):
         else:
             seconds = max(seconds, 10)
         scan_interval = timedelta(seconds=seconds)
-        self.coordinator.update_interval = scan_interval
-        self.coordinator.async_set_updated_data(data=self._status)
+        coordinator = None
+        if self.update_manager is not None:
+            coordinator = getattr(self.update_manager, "coordinator", None)
+        if coordinator is None:
+            return seconds
+        coordinator.update_interval = scan_interval
+        coordinator.async_set_updated_data(data=self._status)
         return seconds
     
     async def async_update_fw_version(self, r_json):
