@@ -58,6 +58,7 @@ from .const import (
     CONF_DEVICE_VERSION,
     CONF_DEVICE_ADDRESS,
     CONF_DEVICE_IP_ADDRESS,
+    CONF_ENTRY_ID,
     CONF_ACCESS_TOKEN,
     CONF_REFRESH_TOKEN,
     CONF_REFRESH_EXPIRE,
@@ -477,7 +478,8 @@ class X1S(Plug):
         self.new_data = dict()
         self.update_flag = list()
         self.api_key = config.get(CONF_API_KEY)
-        self.api = PlugAPI(self.hass, self.api_key)
+        self.entry_id = config.get(CONF_ENTRY_ID)
+        self.api = PlugAPI(self.hass, self.api_key, entry_id=self.entry_id)
         self.api.async_set_status = self.api.async_set_outlet_status
         # self.api.api_key = self.api_key
         # _LOGGER.debug(self.api_key)
@@ -549,7 +551,8 @@ class SP5F_CNA(Plug):
         self.new_data = dict()
         self.update_flag = list()
         self.api_key = config.get(CONF_API_KEY)
-        self.api = PlugAPI(self.hass, self.api_key)
+        self.entry_id = config.get(CONF_ENTRY_ID)
+        self.api = PlugAPI(self.hass, self.api_key, entry_id=self.entry_id)
         # self.api.api_key = self.api_key
         # _LOGGER.debug(self.api_key)
         # _LOGGER.debug(self.api.api_key)
@@ -621,7 +624,8 @@ class SPB9010W(Plug):
         self.new_data = dict()
         self.update_flag = list()
         self.api_key = config.get(CONF_API_KEY)
-        self.api = PlugAPI(self.hass, self.api_key)
+        self.entry_id = config.get(CONF_ENTRY_ID)
+        self.api = PlugAPI(self.hass, self.api_key, entry_id=self.entry_id)
         self.api.async_set_status = self.api.async_set_outlet_status
         self.api.async_set_led = self.api.async_set_energy
         # self.api.api_key = self.api_key
@@ -692,7 +696,8 @@ class UnkownDevice(Plug):
         self.new_data = dict()
         self.update_flag = list()
         self.api_key = config.get(CONF_API_KEY)
-        self.api = PlugAPI(self.hass, self.api_key)
+        self.entry_id = config.get(CONF_ENTRY_ID)
+        self.api = PlugAPI(self.hass, self.api_key, entry_id=self.entry_id)
         # self.api.api_key = self.api_key
         _LOGGER.debug(self.api_key)
         _LOGGER.debug(self.api.api_key)

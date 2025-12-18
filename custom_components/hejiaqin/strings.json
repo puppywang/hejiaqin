@@ -68,6 +68,7 @@
             "unsupported_device_type": "Unsupported device type!"
         },
         "error": {
+            "missing_credentials": "Please provide phone/password or API_KEY.",
             "authentication_failed": "Failed to authenticate.\n{msg}",
             "device_list_failed": "Failed to retrieve device list.\n{msg}",
             "cannot_connect": "Cannot connect to device. Verify that address is correct.",
@@ -82,13 +83,12 @@
         },
         "step": {
             "user": {
-                "title": "Main Configuration",
-                "description": "Please select a login method",
-                "menu_options": {
-                    "local": "Add the device by IP address",
-                    "password": "Log in with your password",
-                    "sms": "Log in with an SMS verification code",
-                    "qrcode": "Scan the QR code to log in"
+                "title": "和家亲登录",
+                "description": "默认使用手机号+密码登录；如果你已获取 API_KEY 也可以直接填写\n{msg}",
+                "data": {
+                    "phone": "手机号",
+                    "password": "密码",
+                    "api_key": "API_KEY（可选）"
                 }
             },
             "local": {

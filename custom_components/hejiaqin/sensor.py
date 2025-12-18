@@ -64,7 +64,7 @@ SENSOR_TYPES = {
         translation_key="power_consumption",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         suggested_display_precision=DEFAULT_PRECISION,
     ),

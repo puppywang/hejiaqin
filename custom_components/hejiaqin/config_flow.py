@@ -21,9 +21,12 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 from .hejiaqin import async_get_devices_list
+from .hejiaqin_api import async_login_and_get_api_key
 from .const import (
     CONF_USER_INPUT,
     CONF_API_KEY,
+    CONF_PHONE,
+    CONF_PASSWORD,
     DOMAIN,
 )
 #from .discovery import discover
@@ -41,8 +44,10 @@ CONFIGURE_SCHEMA = vol.Schema(
 )
 
 CLOUD_SETUP_SCHEMA = vol.Schema(
-    {    
-        vol.Required(CONF_API_KEY): cv.string,
+    {
+        vol.Optional(CONF_PHONE, default=""): cv.string,
+        vol.Optional(CONF_PASSWORD, default=""): cv.string,
+        vol.Optional(CONF_API_KEY, default=""): cv.string,
     }
 )
 
@@ -106,25 +111,44 @@ class HejiaqinConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         errors = {}
-        placeholders = {}
+        placeholders = {"msg": ""}
 
         if user_input is not None:
-            api_key = user_input.get(CONF_API_KEY)
-            api_key = api_key.strip()
-            user_input[CONF_API_KEY] = api_key
-            error, resp = await async_get_devices_list(self.hass, api_key)
-            if error is None:
-                r_json = resp.json()
-                devices = r_json.get(CONF_DEVICES, list())
-                if len(devices) > 0:
-                    self.device_list = devices
-                    return await self._create_entry(user_input)
-                
-                errors["base"] = 'unknown'
-                placeholders = {"msg": "no devices"}
+            api_key = (user_input.get(CONF_API_KEY) or "").strip()
+            phone = (user_input.get(CONF_PHONE) or "").strip()
+            password = user_input.get(CONF_PASSWORD) or ""
+
+            # Prefer API_KEY if provided
+            if not api_key:
+                if not phone or not password:
+                    errors["base"] = "missing_credentials"
+                else:
+                    login_error, api_key = await async_login_and_get_api_key(phone, password)
+                    if login_error:
+                        errors["base"] = 'authentication_failed'
+                        placeholders = {"msg": login_error}
+                    else:
+                        user_input[CONF_PHONE] = phone
+                        user_input[CONF_API_KEY] = api_key
             else:
-                errors["base"] = 'unknown'
-                placeholders = {"msg": error}
+                user_input[CONF_API_KEY] = api_key
+                user_input[CONF_PHONE] = phone
+
+            if not errors:
+                # Get devices list
+                error, resp = await async_get_devices_list(self.hass, api_key)
+                if error is None:
+                    r_json = resp.json()
+                    devices = r_json.get(CONF_DEVICES, list())
+                    if len(devices) > 0:
+                        self.device_list = devices
+                        return await self._create_entry(user_input)
+
+                    errors["base"] = 'unknown'
+                    placeholders = {"msg": "no devices"}
+                else:
+                    errors["base"] = 'device_list_failed'
+                    placeholders = {"msg": error}
 
         return self.async_show_form(
             step_id="user",
@@ -137,7 +161,8 @@ class HejiaqinConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Register new entry."""
         # if self._async_current_entries():
         #     return self.async_abort(reason="already_configured")
-        unique_id = user_input[CONF_API_KEY]
+        # Use phone number as unique_id instead of API_KEY (which can change)
+        unique_id = user_input.get(CONF_PHONE) or user_input.get(CONF_API_KEY)
         await self.async_set_unique_id(unique_id)
 
         devices = {}
@@ -171,7 +196,7 @@ class HejiaqinOptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry):
         """Initialize hejiaqin options flow."""
-        self.config_entry = config_entry
+        self._config_entry = config_entry
         # _LOGGER.debug(config_entry.entry_id)
 
     async def async_step_init(self, user_input=None):
@@ -183,7 +208,7 @@ class HejiaqinOptionsFlowHandler(config_entries.OptionsFlow):
             scan_interval = user_input.get(CONF_SCAN_INTERVAL, old_scan_interval)
             self.hass.data[DOMAIN][CONF_SCAN_INTERVAL] = scan_interval
             
-            for device in self.hass.data[DOMAIN][SL_DEVICES][self.config_entry.entry_id]:
+            for device in self.hass.data[DOMAIN][SL_DEVICES][self._config_entry.entry_id]:
                 await device.async_set_scan_interval(scan_interval)
             
             return self.async_create_entry(title="", data={})

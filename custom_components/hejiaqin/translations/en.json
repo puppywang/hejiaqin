@@ -251,6 +251,7 @@
             "unsupported_device_type": "Unsupported device type!"
         },
         "error": {
+            "missing_credentials": "Please provide phone/password or API_KEY.",
             "authentication_failed": "Failed to authenticate.\n{msg}",
             "device_list_failed": "Failed to retrieve device list.\n{msg}",
             "cannot_connect": "Cannot connect to device. Verify that address is correct.",
@@ -265,13 +266,12 @@
         },
         "step": {
             "user": {
-                "title": "Main Configuration",
-                "description": "Please type API_KEY",
-                "menu_options": {
-                    "local": "Add the device by IP address",
-                    "password": "Log in with your password",
-                    "sms": "Log in with an SMS verification code",
-                    "qrcode": "Scan the QR code to log in"
+                "title": "Hejiaqin Login",
+                "description": "Default: login with phone and password. If you already have an API_KEY, you can enter it directly\n{msg}",
+                "data": {
+                    "phone": "Phone Number",
+                    "password": "Password",
+                    "api_key": "API_KEY (optional)"
                 }
             },
             "local": {
@@ -282,16 +282,16 @@
                 }
             },
             "password": {
-                "title": "SunLogin Configuration",
-                "description": "Input the credentials for SunLogin\n{msg}",
+                "title": "HeJiaQin Configuration",
+                "description": "Input the credentials for HeJiaQin\n{msg}",
                 "data": {
                     "username": "Username",
                     "password": "Password"
                 }
             },
             "sms": {
-                "title": "SunLogin Configuration",
-                "description": "Input the credentials for SunLogin\n{msg}",
+                "title": "HeJiaQin Configuration",
+                "description": "Input the credentials for HeJiaQin\n{msg}",
                 "data": {
                     "username": "Username",
                     "code": "Verification Code"
@@ -315,7 +315,7 @@
     "options": {
         "step": {
             "init": {
-                "title": "SunLogin Configuration",
+                "title": "HeJia Configuration",
                 "description": "Please select the desired actionSSSS.",
                 "data": {
                     "add_device": "Add a new device",

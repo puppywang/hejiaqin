@@ -251,6 +251,7 @@
             "unsupported_device_type": "不支持的设备类型！"
         },
         "error": {
+            "missing_credentials": "请填写手机号+密码，或直接填写 API_KEY。",
             "authentication_failed": "身份验证失败。\n{msg}",
             "device_list_failed": "无法获取设备列表。\n{msg}",
             "cannot_connect": "无法连接到设备，验证地址是否正确。",
@@ -265,13 +266,12 @@
         },
         "step": {
             "user": {
-                "title": "登录",
-                "description": "请输入API_KEY",
-                "menu_options": {
-                    "local": "使用IP添加设备",
-                    "password": "密码登录",
-                    "sms": "短信验证码登录",
-                    "qrcode": "扫码登录"
+                "title": "和家亲登录",
+                "description": "默认使用手机号+密码登录；如果你已获取 API_KEY 也可以直接填写\n{msg}",
+                "data": {
+                    "phone": "手机号",
+                    "password": "密码",
+                    "api_key": "API_KEY（可选）"
                 }
             },
             "local": {
@@ -282,15 +282,15 @@
                 }
             },
             "password": {
-                "title": "向日葵账号",
-                "description": "输入向日葵账号密码\n{msg}",
+                "title": "和家亲账号",
+                "description": "输入和家亲账号密码\n{msg}",
                 "data": {
                     "username": "用户名",
                     "password": "密码"
                 }
             },
             "sms": {
-                "title": "向日葵账号",
+                "title": "和家亲账号",
                 "description": "输入手机号和验证码\n{msg}",
                 "data": {
                     "username": "手机号",
@@ -315,7 +315,7 @@
     "options": {
         "step": {
             "init": {
-                "title": "向日葵配置",
+                "title": "和家亲配置",
                 "description": "请选择所需的操作。",
                 "data": {
                     "add_device": "Add a new device",

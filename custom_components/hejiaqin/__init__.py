@@ -32,6 +32,7 @@ from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.event import async_track_time_interval
 
 from .hejiaqin import DNSUpdateManger, get_hejiaqin_device, device_filter, async_get_devices_list
+from .hejiaqin_api import async_login_and_get_api_key
 # from .common import TuyaDevice, async_config_entry_by_device_id
 from .config_flow import ENTRIES_VERSION
 from .const import (
@@ -46,10 +47,13 @@ from .const import (
     CONF_RELOAD_FLAG,
     CONF_DEVICE_ADDRESS,
     CONF_API_KEY,
+    CONF_PHONE,
+    CONF_PASSWORD,
     CONF_SMARTPLUG,
     CONF_DEVICE_MODEL,
     CONF_DEVICE_NAME,
     CONF_DEVICE_SN,
+    CONF_ENTRY_ID,
     SL_DEVICES,
     CLOUD_DATA,
     DOMAIN,
@@ -120,7 +124,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     async def setup_entities(device_ids):
         for dev_id in device_ids:
-            device_config = entry.data[CONF_DEVICES][dev_id]
+            device_config = {**entry.data[CONF_DEVICES][dev_id], CONF_ENTRY_ID: entry.entry_id}
             device = await get_hejiaqin_device(hass, device_config)
             if device is None: continue
             config[SL_DEVICES].append(device)
@@ -171,10 +175,46 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_hejiaqin_reload_entry(hass: HomeAssistant, entry: ConfigEntry):
-    api_key = entry.data[CONF_USER_INPUT][CONF_API_KEY]
+    """Reload entry and refresh token if needed."""
+    api_key = entry.data[CONF_USER_INPUT].get(CONF_API_KEY)
+    phone = entry.data[CONF_USER_INPUT].get(CONF_PHONE)
+    password = entry.data[CONF_USER_INPUT].get(CONF_PASSWORD)
+    
+    # Try to get devices with current API key
     error, resp = await async_get_devices_list(hass, api_key)
+    
+    # If failed and we have credentials, try to re-login
+    if error is not None and phone and password:
+        _LOGGER.info(f"API key expired, attempting re-login for {phone}")
+        login_error, new_api_key = await async_login_and_get_api_key(phone, password)
+        
+        if login_error is None and new_api_key:
+            api_key = new_api_key
+            # Update the entry with new API key
+            new_data = {**entry.data}
+            new_data[CONF_USER_INPUT] = {**entry.data[CONF_USER_INPUT]}
+            new_data[CONF_USER_INPUT][CONF_API_KEY] = api_key
+            
+            # Update all devices with new API key
+            new_devices = {}
+            for dev_id, dev_config in new_data.get(CONF_DEVICES, {}).items():
+                dev_config = {**dev_config}
+                dev_config[CONF_API_KEY] = api_key
+                new_devices[dev_id] = dev_config
+            new_data[CONF_DEVICES] = new_devices
+            
+            hass.config_entries.async_update_entry(entry, data=new_data)
+            _LOGGER.info(f"Successfully refreshed API key for {phone}")
+            
+            # Retry getting devices
+            error, resp = await async_get_devices_list(hass, api_key)
+        else:
+            _LOGGER.error(f"Re-login failed for {phone}: {login_error}")
+    
     if error is not None:
-        pass
+        _LOGGER.warning(f"Failed to get devices list: {error}")
+        hass.data[DOMAIN][CONF_RELOAD_FLAG].remove(entry.entry_id)
+        return
     
     update_flag = False
     r_json = resp.json()
